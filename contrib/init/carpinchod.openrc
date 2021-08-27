@@ -1,0 +1,92 @@
+#!/sbin/openrc-run
+
+# backward compatibility for existing gentoo layout 
+#
+if [ -d "/var/lib/carpincho/.carpincho" ]; then
+	CARPINCHOD_DEFAULT_DATADIR="/var/lib/carpincho/.carpincho"
+else
+	CARPINCHOD_DEFAULT_DATADIR="/var/lib/carpinchod"
+fi
+
+CARPINCHOD_CONFIGFILE=${CARPINCHOD_CONFIGFILE:-/etc/carpincho/carpincho.conf}
+CARPINCHOD_PIDDIR=${CARPINCHOD_PIDDIR:-/var/run/carpinchod}
+CARPINCHOD_PIDFILE=${CARPINCHOD_PIDFILE:-${CARPINCHOD_PIDDIR}/carpinchod.pid}
+CARPINCHOD_DATADIR=${CARPINCHOD_DATADIR:-${CARPINCHOD_DEFAULT_DATADIR}}
+CARPINCHOD_USER=${CARPINCHOD_USER:-${CARPINCHO_USER:-carpincho}}
+CARPINCHOD_GROUP=${CARPINCHOD_GROUP:-carpincho}
+CARPINCHOD_BIN=${CARPINCHOD_BIN:-/usr/bin/carpinchod}
+CARPINCHOD_NICE=${CARPINCHOD_NICE:-${NICELEVEL:-0}}
+CARPINCHOD_OPTS="${CARPINCHOD_OPTS:-${CARPINCHO_OPTS}}"
+
+name="CARPINCHO Core Daemon"
+description="CARPINCHO cryptocurrency P2P network daemon"
+
+command="/usr/bin/carpinchod"
+command_args="-pid=\"${CARPINCHOD_PIDFILE}\" \
+		-conf=\"${CARPINCHOD_CONFIGFILE}\" \
+		-datadir=\"${CARPINCHOD_DATADIR}\" \
+		-daemon \
+		${CARPINCHOD_OPTS}"
+
+required_files="${CARPINCHOD_CONFIGFILE}"
+start_stop_daemon_args="-u ${CARPINCHOD_USER} \
+			-N ${CARPINCHOD_NICE} -w 2000"
+pidfile="${CARPINCHOD_PIDFILE}"
+
+# The retry schedule to use when stopping the daemon. Could be either
+# a timeout in seconds or multiple signal/timeout pairs (like
+# "SIGKILL/180 SIGTERM/300")
+retry="${CARPINCHOD_SIGTERM_TIMEOUT}"
+
+depend() {
+	need localmount net
+}
+
+# verify
+# 1) that the datadir exists and is writable (or create it)
+# 2) that a directory for the pid exists and is writable
+# 3) ownership and permissions on the config file
+start_pre() {
+	checkpath \
+	-d \
+	--mode 0750 \
+	--owner "${CARPINCHOD_USER}:${CARPINCHOD_GROUP}" \
+	"${CARPINCHOD_DATADIR}"
+
+	checkpath \
+	-d \
+	--mode 0755 \
+	--owner "${CARPINCHOD_USER}:${CARPINCHOD_GROUP}" \
+	"${CARPINCHOD_PIDDIR}"
+
+	checkpath -f \
+	-o ${CARPINCHOD_USER}:${CARPINCHOD_GROUP} \
+	-m 0660 \
+	${CARPINCHOD_CONFIGFILE}
+
+	checkconfig || return 1
+}
+
+checkconfig()
+{
+	if ! grep -qs '^rpcpassword=' "${CARPINCHOD_CONFIGFILE}" ; then
+		eerror ""
+		eerror "ERROR: You must set a secure rpcpassword to run carpinchod."
+		eerror "The setting must appear in ${CARPINCHOD_CONFIGFILE}"
+		eerror ""
+		eerror "This password is security critical to securing wallets "
+		eerror "and must not be the same as the rpcuser setting."
+		eerror "You can generate a suitable random password using the following "
+		eerror "command from the shell:"
+		eerror ""
+		eerror "bash -c 'tr -dc a-zA-Z0-9 < /dev/urandom | head -c32 && echo'"
+		eerror ""
+		eerror "It is recommended that you also set alertnotify so you are "
+		eerror "notified of problems:"
+		eerror ""
+		eerror "ie: alertnotify=echo %%s | mail -s \"CARPINCHO Alert\"" \
+			"admin@foo.com"
+		eerror ""
+		return 1
+	fi
+}

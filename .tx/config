@@ -1,0 +1,7 @@
+[main]
+host = https://www.transifex.com
+
+[carpincho.qt-translation-021x]
+file_filter = src/qt/locale/carpincho_<lang>.ts
+source_file = src/qt/locale/carpincho_en.ts
+source_lang = en

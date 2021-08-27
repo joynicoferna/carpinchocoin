@@ -1,0 +1,33 @@
+# /etc/conf.d/carpinchod: config file for /etc/init.d/carpinchod
+
+# Config file location
+#CARPINCHOD_CONFIGFILE="/etc/carpincho/carpincho.conf"
+
+# What directory to write pidfile to?  (created and owned by $CARPINCHOD_USER)
+#CARPINCHOD_PIDDIR="/var/run/carpinchod"
+
+# What filename to give the pidfile
+#CARPINCHOD_PIDFILE="${CARPINCHOD_PIDDIR}/carpinchod.pid"
+
+# Where to write carpinchod data (be mindful that the blockchain is large)
+#CARPINCHOD_DATADIR="/var/lib/carpinchod"
+
+# User and group to own carpinchod process
+#CARPINCHOD_USER="carpincho"
+#CARPINCHOD_GROUP="carpincho"
+
+# Path to carpinchod executable
+#CARPINCHOD_BIN="/usr/bin/carpinchod"
+
+# Nice value to run carpinchod under
+#CARPINCHOD_NICE=0
+
+# Additional options (avoid -conf and -datadir, use flags above)
+#CARPINCHOD_OPTS=""
+
+# The timeout in seconds OpenRC will wait for carpinchod to terminate
+# after a SIGTERM has been raised.
+# Note that this will be mapped as argument to start-stop-daemon's
+# '--retry' option, which means you can specify a retry schedule
+# here. For more information see man 8 start-stop-daemon.
+CARPINCHOD_SIGTERM_TIMEOUT=600
